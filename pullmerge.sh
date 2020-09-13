@@ -5,16 +5,20 @@ if [ "$inside_git_repo" ]; then
 
     is_git_repo_clean="$(git status --porcelain)"
     if [ -z "${is_git_repo_clean}" ]; then
-        if [[ -n $1 ]]; then
-            origin="$1"
+        origin="$1"
+        branch="$(git rev-parse --verify $origin 2>/dev/null)"
+        if [[ -n $branch ]]; then
             current_branch="$(git symbolic-ref --short -q HEAD)"
             if [ "$origin" = "$current_branch" ]; then
-                git pull origin "$1";
+                git pull origin "$origin";
             else
-                echo "given branch not current";
+                git checkout "$origin";
+                git pull origin "$origin";
+                git checkout "$current_branch";
+                git merge "$origin";
             fi
         else 
-            echo "Provide origin name as argument"
+            echo "Provide origin name as an argument"
         fi
     else
         echo "Branch is not clean.";
